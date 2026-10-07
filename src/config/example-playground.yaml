@@ -1,0 +1,109 @@
+# ─────────────────────────────────────────────────────────────────────
+# Bundled example — the "hello world" of this pipeline.
+#
+# It records against a PUBLIC demo site (the Playwright TodoMVC app), so you
+# can run it with nothing but Node, ffmpeg and an OpenAI key — no app of your
+# own, no login, no seed. Set BASE_URL=https://demo.playwright.dev in .env.
+#
+# Run it:
+#   npx tsx src/index.ts --demo=example-playground --dry-run   # record only
+#   npx tsx src/index.ts --demo=example-playground             # full pipeline
+#
+# Read this file top to bottom: it exercises navigate / type / press-key /
+# click / wait and both the LLM narration and the branded intro/outro.
+# ─────────────────────────────────────────────────────────────────────
+id: example-playground
+title: "A quick tour of a to-do app"
+description: "A short tutorial-style walkthrough: add a few tasks, complete one, and filter the list."
+duration_target_seconds: 40
+locale: en
+
+# No app of ours to log into: go straight to the public URL, no locale prefix.
+skip_login: true
+no_locale_prefix: true
+
+# Tutorial feel: animated guide-cursor + highlight ring before each action.
+cursor_guide: true
+
+# Landscape 16:9. Record at the viewport size; ffmpeg upscales to the target.
+video_width: 1920
+video_height: 1080
+viewport_width: 1280
+viewport_height: 720
+
+# Narration: written by the LLM from each segment's hint.
+narration_persona: "a calm, friendly product tutorial narrator"
+narration_language: "English (US)"
+narration_wpm: 90
+tts_provider: openai
+tts_voice: alloy
+tts_speed: 1.0
+
+segments:
+  # Hidden warm-up: load the page once so the first visible segment is instant.
+  - id: warmup
+    hidden: true
+    pause_after_ms: 300
+    narration_hint: "(warmup)"
+    actions:
+      - { type: navigate, path: /todomvc }
+      - { type: wait, selector: "input.new-todo", timeout_ms: 15000 }
+
+  - id: intro
+    pause_after_ms: 1200
+    narration_hint: >-
+      Let's take a quick look at a simple to-do app. In a few seconds you'll see
+      how to add tasks, mark them done, and filter what's left.
+    actions:
+      - { type: navigate, path: /todomvc }
+      - { type: wait, selector: "input.new-todo", timeout_ms: 15000 }
+
+  - id: add-first
+    pause_after_ms: 900
+    narration_hint: >-
+      We start by typing a task into the box at the top and pressing Enter.
+    actions:
+      - { type: type, selector: "input.new-todo", text: "Buy milk", delay_ms: 70 }
+      - { type: press-key, key: "Enter" }
+      - { type: wait, ms: 400 }
+
+  - id: add-more
+    pause_after_ms: 900
+    narration_hint: >-
+      Each line you add becomes its own item, so the list grows as fast as you type.
+    actions:
+      - { type: type, selector: "input.new-todo", text: "Write the report", delay_ms: 70 }
+      - { type: press-key, key: "Enter" }
+      - { type: wait, ms: 300 }
+      - { type: type, selector: "input.new-todo", text: "Go for a run", delay_ms: 70 }
+      - { type: press-key, key: "Enter" }
+      - { type: wait, ms: 400 }
+
+  - id: complete
+    pause_after_ms: 1000
+    narration_hint: >-
+      When a task is done, you tick its checkbox and it gets crossed off the list.
+    actions:
+      - { type: click, selector: ".todo-list li:first-child .toggle" }
+      - { type: wait, ms: 600 }
+
+  - id: filter
+    pause_after_ms: 1200
+    narration_hint: >-
+      And the filters at the bottom let you focus: Active hides what's finished,
+      so you only see what's still left to do.
+    actions:
+      - { type: click, selector: "a:has-text('Active')" }
+      - { type: wait, ms: 800 }
+
+  - id: outro
+    pause_after_ms: 1500
+    narration_hint: >-
+      That's the whole idea: type it, check it, filter it. Simple enough to start today.
+    actions:
+      - { type: click, selector: "a:has-text('All')" }
+      - { type: wait, ms: 600 }
+
+clips:
+  platforms: [landscape]
+  highlights: []

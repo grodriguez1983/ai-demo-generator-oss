@@ -1,0 +1,17 @@
+node_modules/
+dist/
+
+# All output is regenerable (videos, audio, scripts, subtitles, clips)
+output/
+
+# Secrets
+.env
+
+# System / temp
+.DS_Store
+*.log
+*.webm
+*.mp4
+*.mp3
+*.gif
+*.heapsnapshot

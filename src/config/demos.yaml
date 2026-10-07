@@ -1,0 +1,21 @@
+# Shared config for all demos.
+#
+# `branding` is the default intro/outro slide used by the render and clip
+# stages (any demo can override it with its own `branding:` block, or drop it
+# entirely with `skip_branding: true`).
+#
+# `demos` is the list loaded when you run the pipeline with no `--demo=<id>`.
+# Keep it empty and put each demo in its own `src/config/<id>.yaml`, run with
+# `--demo=<id>`. The bundled example lives in `example-playground.yaml`.
+
+branding:
+  intro_text: "My Product"
+  outro_text: "Request a demo"
+  outro_url: "you@example.com"
+  primary_color: "#1E40AF"
+  secondary_color: "#FFFFFF"
+  font: "Inter"
+  intro_duration_sec: 2.5
+  outro_duration_sec: 3
+
+demos: []
