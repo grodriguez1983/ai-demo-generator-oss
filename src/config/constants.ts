@@ -13,10 +13,15 @@ export const envSchema = z.object({
     'alloy', 'ash', 'ballad', 'coral', 'echo', 'fable',
     'onyx', 'nova', 'sage', 'shimmer', 'verse', 'marin', 'cedar',
   ]).default('alloy'),
-  // ── ElevenLabs (optional) — used when TTS_PROVIDER=elevenlabs ──
-  TTS_PROVIDER: z.enum(['openai', 'elevenlabs']).default('openai'),
+  // ── Voice provider ──────────────────────────────────────────────
+  // Default is ElevenLabs (far better voices). OpenAI TTS is the fallback that
+  // needs no extra account — set TTS_PROVIDER=openai to use it.
+  TTS_PROVIDER: z.enum(['openai', 'elevenlabs']).default('elevenlabs'),
   ELEVENLABS_API_KEY: z.string().optional(),
-  ELEVENLABS_VOICE_ID: z.string().optional(),
+  // Defaults to "Rachel", a premade ElevenLabs voice available on every account
+  // (so the pipeline works with just an API key). Swap for any voice id from
+  // your ElevenLabs library.
+  ELEVENLABS_VOICE_ID: z.string().default('21m00Tcm4TlvDq8ikWAM'),
   ELEVENLABS_MODEL: z.string().default('eleven_multilingual_v2'),
   VIDEO_WIDTH: z.coerce.number().int().positive().default(1280),
   VIDEO_HEIGHT: z.coerce.number().int().positive().default(720),

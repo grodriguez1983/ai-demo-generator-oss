@@ -35,8 +35,9 @@ viewport_height: 720
 narration_persona: "a calm, friendly product tutorial narrator"
 narration_language: "English (US)"
 narration_wpm: 90
-tts_provider: openai
-tts_voice: alloy
+# Voice: uses the provider + voice from .env (default: ElevenLabs "Rachel").
+# To override per demo: tts_voice_id (ElevenLabs) or tts_voice (OpenAI).
+tts_provider: elevenlabs
 tts_speed: 1.0
 
 segments:

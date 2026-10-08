@@ -24,22 +24,30 @@ does is fully described by the flow, so the same engine records any web app.
 
 - **Node.js 20+**
 - **ffmpeg** — `brew install ffmpeg` (macOS) · `apt install ffmpeg` (Debian/Ubuntu)
-- An **OpenAI API key** (narration script; also TTS unless you use ElevenLabs)
+- An **OpenAI API key** — always needed, it writes the narration script
+- An **ElevenLabs API key** — the default voice provider (its voices are far
+  better than OpenAI's). To skip it, set `TTS_PROVIDER=openai` and use OpenAI's
+  (more robotic) voices with just the OpenAI key.
 - The app you want to record, reachable over HTTP (the bundled example uses a
   public site, so you need nothing of your own to try it)
 
 ## Setup
 
 ```bash
-cp .env.example .env     # fill in OPENAI_API_KEY (and BASE_URL for your app)
+cp .env.example .env     # fill in OPENAI_API_KEY + ELEVENLABS_API_KEY (and BASE_URL)
 npm install
 npx playwright install chromium
 ```
 
+By default voices come from **ElevenLabs** (set `ELEVENLABS_API_KEY`; the voice
+defaults to the premade "Rachel", swap `ELEVENLABS_VOICE_ID` for any voice in
+your library). Don't want a second account? Set `TTS_PROVIDER=openai` to use
+OpenAI's voices with just the OpenAI key.
+
 ## Try the bundled example (no app of your own)
 
-The example records against a public TodoMVC site, so it runs with just an
-OpenAI key. In `.env`, set `BASE_URL=https://demo.playwright.dev`, then:
+The example records against a public TodoMVC site, so it needs no app of your
+own. In `.env`, set `BASE_URL=https://demo.playwright.dev` and your keys, then:
 
 ```bash
 # 1. Cheap smoke test: records the flow, no LLM/TTS/render spend.
@@ -107,8 +115,8 @@ viewport_height: 720
 narration_persona: "a calm product tutorial narrator"   # who the LLM "is"
 narration_language: "English (US)"                       # defaults to locale
 narration_wpm: 90
-tts_provider: openai
-tts_voice: alloy
+tts_provider: elevenlabs     # uses ELEVENLABS_VOICE_ID from .env
+# tts_voice_id: "<id>"       # override the voice for this demo
 
 segments:
   - id: step-one

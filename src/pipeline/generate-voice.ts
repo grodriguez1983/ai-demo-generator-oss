@@ -52,8 +52,9 @@ export async function generateTTSAudio(
 }
 
 /**
- * Genera audio con ElevenLabs (voz clonada). Usa la API REST de TTS.
- * Requiere ELEVENLABS_API_KEY y ELEVENLABS_VOICE_ID en el entorno.
+ * Generate audio with ElevenLabs via the TTS REST API.
+ * Requires ELEVENLABS_API_KEY; the voice id comes from the demo or the env
+ * (ELEVENLABS_VOICE_ID, which has a premade default).
  */
 async function generateElevenLabsAudio(
   text: string,
@@ -63,10 +64,10 @@ async function generateElevenLabsAudio(
 ): Promise<void> {
   const apiKey = config.ELEVENLABS_API_KEY;
   const voiceId = demo?.tts_voice_id ?? config.ELEVENLABS_VOICE_ID;
-  if (!apiKey) throw new Error('TTS_PROVIDER=elevenlabs pero falta ELEVENLABS_API_KEY');
-  if (!voiceId) throw new Error('TTS_PROVIDER=elevenlabs pero falta ELEVENLABS_VOICE_ID');
+  if (!apiKey) throw new Error('TTS_PROVIDER=elevenlabs but ELEVENLABS_API_KEY is missing');
+  if (!voiceId) throw new Error('TTS_PROVIDER=elevenlabs but no voice id (set ELEVENLABS_VOICE_ID or the demo tts_voice_id)');
 
-  // La velocidad se controla con voice_settings.speed (0.7–1.2). Reusamos tts_speed.
+  // Speed is controlled via voice_settings.speed (0.7–1.2). Reuse tts_speed.
   const speed = Math.min(1.2, Math.max(0.7, demo?.tts_speed ?? 1.0));
 
   const res = await fetch(
@@ -94,12 +95,12 @@ async function generateElevenLabsAudio(
 
   if (!res.ok) {
     const detail = await res.text().catch(() => '');
-    throw new Error(`ElevenLabs TTS falló (${res.status}): ${detail.slice(0, 300)}`);
+    throw new Error(`ElevenLabs TTS failed (${res.status}): ${detail.slice(0, 300)}`);
   }
 
   const buffer = Buffer.from(await res.arrayBuffer());
   await writeFile(outputPath, buffer);
-  log.info(`TTS (ElevenLabs) guardado: ${outputPath} (${(buffer.length / 1024).toFixed(0)}KB)`);
+  log.info(`TTS (ElevenLabs) saved: ${outputPath} (${(buffer.length / 1024).toFixed(0)}KB)`);
 }
 
 /** Build a fallback timing map from the demo YAML.
