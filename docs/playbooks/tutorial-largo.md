@@ -74,6 +74,10 @@ defectos caros. Aplicá y escribí la v2. Detalle: `auditoria-con-agentes.md`.
 - **Diagramá lo que la prosa repite.** Si un concepto necesita dos pasadas de
   locución para entenderse, no le falta explicación: le falta un dibujo (SVG
   inline, sin librerías).
+- **El texto entra animado, sincronizado con la voz.** Ninguna pantalla aparece
+  completa y quieta: cada palabra/línea/fila hace su reveal y el conjunto se
+  reparte sobre la duración real hablada (decisión 0005). Por eso se regenera
+  **después** de la pasada 1 de voz: así `build()` lee el mp3 y calza el reveal.
 - El tema visual se cambia editando los tokens de `assets/screens/theme.css`.
 
 ## 5. Gate visual (antes de gastar TTS)

@@ -26,7 +26,7 @@ Then:
 Edit the DECK at the bottom of this file (or import these helpers from your own
 script). The helpers mirror the theme classes in assets/screens/theme.css.
 """
-import os, re, html
+import os, re, html, subprocess
 
 # Words-per-minute used to pre-size each segment's dwell (sleep). It is only a
 # starting point — calibrate-audio.py sets the real value from the recorded mp3.
@@ -45,9 +45,74 @@ BRAND = 'YOUR&nbsp;<b>PRODUCT</b>'
 FOOT_URL = '<span class="url">yoursite.dev</span>'
 
 
+# ── Reveal: text animates in, synced to the spoken line ─────────────
+# No screen is ever static. Each "reveal unit" (a word, an accent phrase, a code
+# line, a board row) carries class .rv/.rvb and a `--k` index placeholder (@@).
+# build() numbers them in reading order and sets a per-screen `--step` so the
+# whole reveal spreads across the segment's real spoken duration (see theme.css).
+_ACCENT = re.compile(r'<br\s*/?>|<span class="g">.*?</span>')
+
+
+def _wrap_words(text):
+    out = []
+    for tok in re.split(r'(\s+)', text):
+        if tok == '':
+            continue
+        out.append(tok if tok.strip() == ''
+                   else f'<span class="rv" style="--k:@@">{tok}</span>')
+    return out
+
+
+def _words(frag):
+    """Wrap a phrase word-by-word in reveal units, keeping <br> and gradient
+    (<span class="g">…</span>) spans whole so accents don't break."""
+    out, i = [], 0
+    for m in _ACCENT.finditer(frag):
+        out += _wrap_words(frag[i:m.start()])
+        tok = m.group(0)
+        out.append(tok if tok.startswith('<br')
+                   else f'<span class="rv" style="--k:@@">{tok}</span>')
+        i = m.end()
+    out += _wrap_words(frag[i:])
+    return ''.join(out)
+
+
+def _number(body):
+    """Replace each `@@` placeholder with a running reveal index; return (html, n)."""
+    n, out, i = 0, [], 0
+    while True:
+        j = body.find('@@', i)
+        if j < 0:
+            out.append(body[i:])
+            break
+        out.append(body[i:j])
+        out.append(str(n))
+        n += 1
+        i = j + 2
+    return ''.join(out), n
+
+
+def _audio_secs(demo_id, seg_id):
+    """Real spoken duration of a take, if already voiced — so the reveal syncs to
+    the actual audio. None before the first voice pass (falls back to WPM)."""
+    p = os.path.join('output', 'audio', f'{demo_id}-{seg_id}.mp3')
+    if not os.path.exists(p):
+        return None
+    try:
+        r = subprocess.run(
+            ['ffprobe', '-v', 'error', '-show_entries', 'format=duration',
+             '-of', 'csv=p=0', p],
+            capture_output=True, text=True, timeout=20)
+        return float(r.stdout.strip())
+    except Exception:
+        return None
+
+
 # ── Frame ───────────────────────────────────────────────────────────
-def pantalla(cuerpo, foot_left=''):
-    return (f'{HEAD}<body><div class="screen">'
+def pantalla(cuerpo, foot_left='', screen_style='', cls=''):
+    st = f' style="{screen_style}"' if screen_style else ''
+    klass = f'screen {cls}'.strip()
+    return (f'{HEAD}<body><div class="{klass}"{st}>'
             f'<div class="brand">{BRAND}</div>'
             f'{cuerpo}'
             f'<div class="foot"><span>{foot_left}</span>{FOOT_URL}</div>'
@@ -56,19 +121,23 @@ def pantalla(cuerpo, foot_left=''):
 
 # ── Templates ───────────────────────────────────────────────────────
 def pizarra(frase, kick=''):
-    """Whiteboard: one big phrase. Use <br> and <span class="g"> for accents."""
-    k = f'<div class="kick">{kick}</div>' if kick else ''
-    return f'<div class="pizarra">{k}<div class="phrase">{frase}</div></div>'
+    """Whiteboard: one big phrase. Use <br> and <span class="g"> for accents.
+    The eyebrow reveals first, then the phrase word by word."""
+    k = f'<div class="kick rvb" style="--k:@@">{kick}</div>' if kick else ''
+    return f'<div class="pizarra">{k}<div class="phrase">{_words(frase)}</div></div>'
 
 
 def editor(paso, nota, ruta, lineas):
     """Split 40/60: a prose column + a code pane. `lineas` is a list of code-line
-    HTML (wrap tokens in .kw/.str/.com/.dim/.now; exactly one .now per screen)."""
-    code = '\n'.join(f'<span class="ln">{str(i + 1).rjust(2)}</span>  {ln}'
-                     for i, ln in enumerate(lineas))
+    HTML (wrap tokens in .kw/.str/.com/.dim/.now; exactly one .now per screen).
+    The step label, the note, then each code line reveal in order."""
+    code = '\n'.join(
+        f'<span class="rvb" style="--k:@@">'
+        f'<span class="ln">{str(i + 1).rjust(2)}</span>  {ln}</span>'
+        for i, ln in enumerate(lineas))
     return (f'<div class="editor">'
-            f'<div class="lado"><div class="paso">{paso}</div>'
-            f'<div class="phrase" style="font-size:62px">{nota}</div></div>'
+            f'<div class="lado"><div class="paso rvb" style="--k:@@">{paso}</div>'
+            f'<div class="phrase" style="font-size:62px">{_words(nota)}</div></div>'
             f'<div class="pane"><div class="barra">'
             f'<div class="dot"></div><div class="dot"></div><div class="dot"></div>'
             f'<span class="ruta">{ruta}</span></div>'
@@ -76,21 +145,26 @@ def editor(paso, nota, ruta, lineas):
 
 
 def terminal(titulo, lineas):
-    """Terminal card. In `lineas` use <span class="p">$</span>, .ok and .err."""
+    """Terminal card. In `lineas` use <span class="p">$</span>, .ok and .err.
+    Lines reveal one by one, as if typed/printed."""
+    body = '\n'.join(f'<span class="rvb" style="--k:@@">{ln}</span>'
+                     for ln in lineas)
     return (f'<div class="terminal"><div class="term">'
             f'<div class="barra">{titulo}</div>'
-            f'<pre>{chr(10).join(lineas)}</pre></div></div>')
+            f'<pre>{body}</pre></div></div>')
 
 
 def tablero(titulo, steps):
     """Progress board. steps = list of (label, state) with state in
-    {'done','now','todo'} — ticks off what is finished and marks the current one."""
+    {'done','now','todo'} — ticks off what is finished and marks the current one.
+    The title, then each row, reveal in order."""
     lis = []
     for i, (label, state) in enumerate(steps, 1):
         cls = {'done': ' done', 'now': ' now', 'todo': ''}.get(state, '')
         mark = '✓' if state == 'done' else str(i)
-        lis.append(f'<li class="step{cls}"><span class="num">{mark}</span>{label}</li>')
-    return (f'<div class="tablero"><div class="titulo">{titulo}</div>'
+        lis.append(f'<li class="step{cls} rvb" style="--k:@@">'
+                   f'<span class="num">{mark}</span>{label}</li>')
+    return (f'<div class="tablero"><div class="titulo rvb" style="--k:@@">{titulo}</div>'
             f'<ul>{"".join(lis)}</ul></div>')
 
 
@@ -103,12 +177,26 @@ def build(demo_id, meta, screens):
     for f in os.listdir(out_dir):
         os.remove(os.path.join(out_dir, f))
 
+    # Orientation: landscape by default, portrait (reel/story) when height > width.
+    W = int(meta.get('width', 1920))
+    H = int(meta.get('height', 1080))
+    vcls = 'v' if H > W else ''
+
     segs, total_ms = [], 0
     for n, sc in enumerate(screens, 1):
+        # Spoken duration: real audio if already voiced, else a WPM estimate.
+        secs = _audio_secs(demo_id, sc['id'])
+        if secs is None:
+            words = len(re.findall(r'\w+', sc['hint']))
+            secs = words / WPM * 60
+        ms = int(secs * 1000) + 400
+        # Number the reveal units and spread them over ~55% of the spoken time,
+        # so the text finishes appearing while the sentence is still being said.
+        body, nrev = _number(sc['html'])
+        span = secs * 0.55
+        step = min(0.45, span / max(1, nrev - 1)) if nrev > 1 else 0
         open(os.path.join(out_dir, f'{n}.html'), 'w').write(
-            pantalla(sc['html'], sc.get('foot', '')))
-        words = len(re.findall(r'\w+', sc['hint']))
-        ms = int(words / WPM * 60 * 1000) + 400
+            pantalla(body, sc.get('foot', ''), f'--step:{step:.3f}s', vcls))
         total_ms += ms + 200
         hint = sc['hint'].replace('\\', '\\\\').replace('"', '\\"')
         segs.append(
@@ -128,13 +216,13 @@ def build(demo_id, meta, screens):
         f'no_locale_prefix: true\n'
         f'skip_branding: true          # the screens already carry the message\n'
         f'verbatim_narration: true     # the hint IS the spoken line (keeps timing predictable)\n'
-        f'video_width: 1920\n'
-        f'video_height: 1080\n'
-        f'viewport_width: 1920\n'
-        f'viewport_height: 1080\n'
+        f'video_width: {W}\n'
+        f'video_height: {H}\n'
+        f'viewport_width: {W}\n'
+        f'viewport_height: {H}\n'
         f'narration_language: "{meta.get("narration_language", "English (US)")}"\n'
         f'tts_provider: elevenlabs\n'
-        f'tts_speed: 1.0\n'
+        f'tts_speed: {meta.get("tts_speed", 1.0)}\n'
         f'segments:\n')
 
     yaml_path = os.path.join(root, 'src', 'config', f'{demo_id}.yaml')

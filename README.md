@@ -42,10 +42,14 @@ npm install
 npx playwright install chromium
 ```
 
-By default voices come from **ElevenLabs** (set `ELEVENLABS_API_KEY`; the voice
-defaults to the premade "Rachel", swap `ELEVENLABS_VOICE_ID` for any voice in
-your library). Don't want a second account? Set `TTS_PROVIDER=openai` to use
-OpenAI's voices with just the OpenAI key.
+**Pick a voice provider** (`.env` spells both out, and an agent setting this up
+will ask you which):
+
+- **ElevenLabs — best quality** (natural, expressive). Set
+  `TTS_PROVIDER=elevenlabs`, `ELEVENLABS_API_KEY`, and a `ELEVENLABS_VOICE_ID`
+  (defaults to the premade "Rachel"; swap for any voice in your library).
+- **OpenAI TTS — cheaper**, no second account (reuses `OPENAI_API_KEY`), but the
+  voice is **lower quality / more robotic**. Set `TTS_PROVIDER=openai`.
 
 ## Try the bundled example (no app of your own)
 

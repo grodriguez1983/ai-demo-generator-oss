@@ -14,6 +14,23 @@ Confirmá en una línea que leíste los tres **antes de tocar nada**.
 
 ---
 
+## 0) Setup en una compu nueva (si no existe `.env`)
+Antes de producir, copiá `.env.example` a `.env` y **preguntale al usuario qué
+proveedor de voz quiere** (no lo asumas) — es la decisión que más cambia costo y
+calidad:
+- **ElevenLabs** (mejor calidad, voz natural/expresiva): pedile su
+  `ELEVENLABS_API_KEY` y su `ELEVENLABS_VOICE_ID` (y dejá `TTS_PROVIDER=elevenlabs`).
+- **OpenAI TTS** (más barato, sin segunda cuenta — reusa `OPENAI_API_KEY`):
+  seteá `TTS_PROVIDER=openai` y **avisale que la voz suena más robótica / de
+  menor calidad**.
+
+Completá también `OPENAI_API_KEY` (el LLM escribe el guion; en demos de pantallas
+verbatim no se llama al LLM, pero igual debe tener un valor) y `BASE_URL`.
+**Nunca** pidas ni pegues claves en un archivo que no sea `.env` (está en
+`.gitignore`); nunca las commitees.
+
+---
+
 ## 1) Qué es esto
 Un pipeline que convierte **un YAML declarativo** en un **video demo narrado**:
 Playwright graba → un LLM escribe el guion desde los `narration_hint` → TTS lo

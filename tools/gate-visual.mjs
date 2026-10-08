@@ -37,6 +37,13 @@ const problems = [];
 
 for (let i = 1; i <= n; i++) {
   await page.goto(`http://127.0.0.1:${port}/${id}/${i}.html`, { waitUntil: 'networkidle' });
+  // Settle the reveal + ambient motion: screenshot and MEASURE the composed
+  // screen, not a mid-animation frame. The reveal's translateY would otherwise
+  // inflate scroll metrics and report false overflow.
+  await page.addStyleTag({ content:
+    '.rv,.rvb{animation:none!important;opacity:1!important;transform:none!important}'
+    + '.g{animation:none!important}.screen::before{animation:none!important}' });
+  await page.evaluate(() => document.getAnimations?.().forEach((a) => { try { a.finish(); } catch {} }));
   await page.screenshot({ path: `${out}/${String(i).padStart(2, '0')}.png` });
   const r = await page.evaluate(() => {
     const s = document.querySelector('.screen');
