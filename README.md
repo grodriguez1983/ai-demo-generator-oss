@@ -1,5 +1,7 @@
 # AI Demo Generator
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 Turn a **declarative YAML flow** into a **narrated product-demo video**. The
 pipeline records a real web app with Playwright, writes the narration with an
 LLM from your hints, voices it with TTS, and renders the final video with
