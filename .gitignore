@@ -15,3 +15,27 @@ output/
 *.mp3
 *.gif
 *.heapsnapshot
+
+# ── Per-piece content: keep the engine generic, never leak a client demo ──
+# New demo configs, decks and generated screens are LOCAL by default, so a
+# client's YAML/script dropped in here is not committed by accident. The
+# shipped examples are kept with the ! exceptions below. To publish a NEW demo
+# on purpose, add its own ! exception (or `git add -f <path>`).
+src/config/*.yaml
+assets/screens/*/
+assets/screens/*.svg
+assets/screens/*.png
+tools/gen-*.py
+
+# shipped examples (stay tracked)
+!src/config/demos.yaml
+!src/config/example-playground.yaml
+!src/config/screens-demo.yaml
+!src/config/vairix-assessment.yaml
+!src/config/vairix-assessment-reel.yaml
+!assets/screens/screens-demo/
+!assets/screens/vairix-assessment/
+!assets/screens/vairix-assessment-reel/
+!assets/screens/vairix-white.svg
+!tools/gen-screens.py
+!tools/gen-vairix-assessment.py
