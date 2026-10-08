@@ -30,6 +30,9 @@ does is fully described by the flow, so the same engine records any web app.
   (more robotic) voices with just the OpenAI key.
 - The app you want to record, reachable over HTTP (the bundled example uses a
   public site, so you need nothing of your own to try it)
+- **Python 3** — for the screen-tutorial tools in `tools/` (optional; the app
+  demo path doesn't need it). The take-verification gate additionally wants
+  [whisper.cpp](https://github.com/ggerganov/whisper.cpp).
 
 ## Setup
 
@@ -174,6 +177,69 @@ clips:
 - **Pacing**: a segment's window is its actions + `pause_after_ms`. For calm
   narration, pause 2–4× longer than feels necessary.
 
+## The screen path (animated tutorials, voice-synced)
+
+Besides recording a real app, you can record **designed screens** — animated
+HTML slides for concept explainers and code tutorials, with the voice synced per
+screen. You author the deck as data and regenerate it; you never hand-edit the
+HTML.
+
+```bash
+# 1. Generate screens + the demo YAML (edit the DECK in the script)
+python3 tools/gen-screens.py                 # writes assets/screens/screens-demo/ + src/config/screens-demo.yaml
+
+# 2. Serve the screens and gate them visually BEFORE spending on TTS
+PORT=5599 npx tsx tools/serve-screens.ts &
+node tools/gate-visual.mjs screens-demo 6    # screenshots + overflow detection
+
+# 3. Pass 1 — record + voice (no render)
+export BASE_URL=http://127.0.0.1:5599
+npx tsx src/index.ts --demo=screens-demo --skip-seed --skip-render --skip-clips
+
+# 4. Verify each take, then calibrate the screen↔voice sync
+bash tools/verify-takes.sh screens-demo      # whisper: did any take get cut?
+bash tools/verify-audio.sh screens-demo      # gaps / volume / clipping / pace
+python3 tools/calibrate-audio.py screens-demo
+
+# 5. Pass 2 — re-record with calibrated timing, then render
+npx tsx src/index.ts --demo=screens-demo --skip-seed --skip-voice
+```
+
+**Why two passes?** Playwright adds ~1s of overhead per navigation, so fixed
+dwell times drift ~1s per segment. Pass 1 produces the audio; `calibrate-audio.py`
+sets each segment's `sleep` to its real audio length; pass 2 records in sync.
+
+The templates (`pizarra` / `editor` / `terminal` / `tablero`) and the theme live
+in `tools/gen-screens.py` and `assets/screens/theme.css` — rebrand by editing the
+`:root` tokens. The full recipe (pedagogy, the "one amber focus per screen" rule,
+the audit gate) is [`docs/playbooks/tutorial-largo.md`](docs/playbooks/tutorial-largo.md).
+
+## Quality gates (`tools/`)
+
+The gates that keep a piece from shipping with a cut or a bad take — the same
+ones the pipeline's authors use. All of them read `output/` and are safe to run
+repeatedly:
+
+| Tool | Checks |
+|---|---|
+| `tools/gate-visual.mjs` | screenshots every screen, flags overflow (run before TTS) |
+| `tools/verify-takes.sh` | transcribes each take with whisper, flags a cut tail or wrong length |
+| `tools/verify-audio.sh` | internal gaps, volume out of range, clipping, speaking rate |
+| `tools/regen-take.py` | re-synthesizes one flagged take (ElevenLabs) without a full re-run |
+| `tools/calibrate-audio.py` | locks each segment's dwell to its audio (the two-pass sync) |
+
+`verify-takes.sh` needs [whisper.cpp](https://github.com/ggerganov/whisper.cpp)
+(`whisper-cli`) and a model; set `WHISPER_MODEL` and `WHISPER_LANG`. The Python
+tools need only Python 3 + ffmpeg.
+
+## Review a script before you produce it (`/auditar`)
+
+Spending TTS on a weak script is waste. Before producing, run the script through
+a panel of three adversarial agents — at least one that can **execute** the real
+material — and apply what they converge on. It is the "Verifiable" gate of the
+spec. See [`docs/playbooks/auditoria-con-agentes.md`](docs/playbooks/auditoria-con-agentes.md)
+(or the `/auditar` command).
+
 ## Adapting it to your app
 
 1. **Login** — the built-in step posts `DEMO_EMAIL`/`DEMO_PASSWORD` to
@@ -196,10 +262,13 @@ src/
   flows/                base-flow (login + recording), declarative-flow (the engine), cursor-guide
   config/               constants.ts (schemas), selectors.ts, demos.yaml, <demo>.yaml
   utils/                ffmpeg, html-slide, srt, timing, logger, openai-client, file-utils
+tools/                  screen generator, screen server, visual + audio gates, calibration
+assets/screens/         theme.css + generated screen decks
 docs/
-  spec/SPEC.md          the GS specification (what is produced + the rules)
+  spec/SPEC.md          the specification (what is produced + the rules)
   decisions/            why the repo is shaped the way it is
-  playbooks/            how to author a new demo
+  playbooks/            nuevo-demo (app), tutorial-largo (screens), auditoria-con-agentes
+.claude/commands/       /nuevo-demo, /curso, /auditar
 ```
 
 ## License

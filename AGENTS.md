@@ -25,8 +25,11 @@ YAML, interpretado por `DeclarativeFlow`.
 | Necesito… | Voy a… |
 |---|---|
 | Entender qué produce la herramienta y sus reglas | [`docs/spec/SPEC.md`](docs/spec/SPEC.md) |
-| Autorar un demo nuevo | [`docs/playbooks/nuevo-demo.md`](docs/playbooks/nuevo-demo.md) (o `/nuevo-demo`) |
-| Ver un ejemplo que corre sin app propia | `src/config/example-playground.yaml` |
+| Autorar un demo de una app (grabación real) | [`docs/playbooks/nuevo-demo.md`](docs/playbooks/nuevo-demo.md) (o `/nuevo-demo`) |
+| Producir un **tutorial largo con pantallas** (16:9, voz sincronizada) | [`docs/playbooks/tutorial-largo.md`](docs/playbooks/tutorial-largo.md) (o `/curso`) |
+| **Auditar un guion antes de producirlo** (gate, antes de gastar TTS) | [`docs/playbooks/auditoria-con-agentes.md`](docs/playbooks/auditoria-con-agentes.md) (o `/auditar`) |
+| Generar/servir pantallas animadas · gates de audio · calibrar sync | `tools/` (ver README §"The screen path") |
+| Ver ejemplos que corren | `src/config/example-playground.yaml` (app) · `src/config/screens-demo.yaml` (pantallas) |
 | Las acciones disponibles / setup / flags | [`README.md`](README.md) |
 | El esquema exacto de un demo (campos, validación) | `src/config/constants.ts` |
 | El porqué de una decisión de diseño | [`docs/decisions/`](docs/decisions/) |

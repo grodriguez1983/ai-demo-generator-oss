@@ -1,0 +1,150 @@
+/*
+ * Neutral screen theme (1920x1080). Rebrand by editing the tokens in :root.
+ *
+ * Class contract (gen-screens.py emits these; gate-visual.mjs checks .screen /
+ * .pane / .term / .phrase / pre for overflow):
+ *   .screen            the fixed 1920x1080 frame (brand / body / foot stack)
+ *   .brand .foot       top mark and bottom footer
+ *   .pizarra .phrase .kick   whiteboard: a big phrase + optional eyebrow
+ *   .editor .lado .paso .nota   split 40/60: prose column + code pane
+ *   .pane .barra .dot .ruta .ln   the code pane (chrome bar, file path, line nums)
+ *   .terminal .term .p .ok .err   terminal card + prompt/success/error spans
+ *   .tablero .step           progress board that ticks off steps
+ *   .kw .str .com .dim .bad   syntax highlight
+ *   .now  (and .now.linea)   the ONE amber focus: what the voice names right now
+ *   .g .url                  gradient-accent text
+ */
+
+:root {
+  --bg: #0d1117;
+  --fg: #e6edf3;
+  --muted: #8b949e;
+  --line: #2b313a;
+  --panel: #0b0f14;
+  --bar: #11161d;
+
+  --accent: #79c0ff;   /* keywords, primary accent */
+  --str: #a5d6ff;      /* strings / numbers */
+  --ok: #3fb950;       /* success */
+  --now: #f0883e;      /* the current-focus amber + warnings */
+  --bad: #f85149;      /* hard errors */
+  --grad: linear-gradient(135deg, #79c0ff 0%, #3fb950 100%);
+
+  --serif: "Playfair Display", Georgia, "Times New Roman", serif;
+  --mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  --sans: "Inter", system-ui, "Helvetica Neue", sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+.screen {
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+  display: flex;
+  flex-direction: column;
+}
+.screen::before {
+  content: "";
+  position: absolute; inset: 0; z-index: 0;
+  background:
+    radial-gradient(60% 50% at 25% 15%, rgba(121, 192, 255, 0.08), transparent 70%),
+    radial-gradient(50% 50% at 85% 90%, rgba(240, 136, 62, 0.06), transparent 70%);
+}
+.brand, .pizarra, .editor, .terminal, .tablero, .foot { z-index: 2; }
+
+.brand {
+  font-family: var(--mono);
+  font-size: 20px; letter-spacing: 0.14em;
+  color: var(--muted); text-transform: uppercase;
+  padding: 34px 60px 0;
+}
+.brand b { color: var(--accent); }
+
+.g {
+  background: var(--grad);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+.warn { color: var(--now); }
+
+/* ── Pizarra (whiteboard) ───────────────────────────────────────── */
+.pizarra {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 44px; padding: 0 200px; text-align: center;
+}
+.phrase { font-family: var(--serif); font-weight: 900; font-size: 88px; line-height: 1.22; padding-bottom: 0.08em; text-wrap: balance; }
+.phrase.sm { font-size: 64px; }
+.kick { font-family: var(--mono); font-size: 26px; letter-spacing: 0.14em; color: var(--muted); }
+
+/* ── Editor (split 40/60) ───────────────────────────────────────── */
+.editor {
+  flex: 1; display: grid; grid-template-columns: 40% 60%;
+  align-items: center; padding: 20px 60px 90px;
+}
+.editor .lado { padding-right: 70px; }
+.editor .paso {
+  font-family: var(--mono); font-size: 22px; letter-spacing: 0.14em;
+  color: var(--now); text-transform: uppercase; margin-bottom: 26px;
+}
+.editor .lado .phrase { font-size: 62px; text-align: left; }
+.editor .nota { margin-top: 28px; font-family: var(--sans); font-size: 26px; color: #c9d1d9; line-height: 1.5; }
+
+.pane {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.45);
+  overflow: hidden; height: 100%; max-height: 800px;
+  display: flex; flex-direction: column;
+}
+.pane .barra { display: flex; align-items: center; gap: 12px; padding: 16px 22px; border-bottom: 1px solid var(--line); background: var(--bar); }
+.pane .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--line); }
+.pane .ruta { font-family: var(--mono); font-size: 20px; color: var(--muted); margin-left: 8px; }
+.pane pre { flex: 1; padding: 26px 30px; font-family: var(--mono); font-size: 24px; line-height: 1.62; color: #d7dee6; white-space: pre-wrap; }
+.pane .ln { color: #4b5663; user-select: none; display: inline-block; width: 2.2em; }
+
+/* ── Syntax highlight ───────────────────────────────────────────── */
+.kw  { color: var(--accent); font-weight: 600; }
+.str { color: var(--str); }
+.com { color: var(--muted); font-style: italic; }
+.bad { color: var(--bad); }
+.dim { color: #5a6470; }
+.hl  { background: rgba(121,192,255,0.10); display: inline-block; width: 100%; border-radius: 4px; }
+/* The ONE amber focus: the element the voice names right now (one per screen). */
+.now { color: var(--now); font-weight: 600; background: rgba(240,136,62,0.14); border-radius: 4px; padding: 0 0.18em; margin: 0 -0.18em; }
+.now.linea { display: inline-block; width: 100%; padding: 2px 0.3em; margin: 0 -0.3em; box-shadow: inset 3px 0 0 var(--now); }
+
+/* ── Terminal ───────────────────────────────────────────────────── */
+.terminal { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 38px; padding: 0 160px 60px; }
+.term { width: 100%; max-width: 1480px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 30px 60px rgba(0,0,0,0.45); overflow: hidden; }
+.term .barra { padding: 14px 22px; border-bottom: 1px solid var(--line); background: var(--bar); font-family: var(--mono); font-size: 19px; color: var(--muted); }
+.term pre { padding: 28px 34px; font-family: var(--mono); font-size: 26px; line-height: 1.7; color: #d7dee6; white-space: pre-wrap; }
+.term .p { color: var(--now); }
+.term .ok { color: var(--ok); font-weight: 600; }
+.term .err { color: var(--bad); font-weight: 600; }
+
+/* ── Tablero (progress board) ───────────────────────────────────── */
+.tablero { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 0 200px; }
+.tablero .titulo { font-family: var(--serif); font-weight: 900; font-size: 56px; margin-bottom: 10px; }
+.tablero ul { list-style: none; width: 100%; max-width: 1200px; }
+.tablero .step {
+  display: flex; align-items: center; gap: 22px;
+  padding: 20px 26px; border-bottom: 1px solid var(--line);
+  font-family: var(--sans); font-size: 32px; color: var(--muted); opacity: 0.5;
+}
+.tablero .step .num { font-family: var(--mono); font-size: 24px; color: var(--muted); width: 2ch; }
+.tablero .step.done { opacity: 1; color: var(--fg); }
+.tablero .step.done .num { color: var(--ok); }
+.tablero .step.now {
+  opacity: 1; color: var(--fg); background: rgba(240,136,62,0.10); border-radius: 10px;
+  box-shadow: inset 4px 0 0 var(--now);
+}
+.tablero .step.now .num { color: var(--now); }
+
+/* ── Footer ─────────────────────────────────────────────────────── */
+.foot { display: flex; align-items: center; justify-content: space-between; padding: 0 60px 30px; font-family: var(--mono); font-size: 22px; color: var(--muted); }
+.foot .url { font-weight: 700; font-size: 24px; background: var(--grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
